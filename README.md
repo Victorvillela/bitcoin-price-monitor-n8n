@@ -352,9 +352,9 @@ of this software and associated documentation files...
 
 **Seu Nome**
 
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
-- LinkedIn: [Seu Nome](https://linkedin.com/in/seu-perfil)
-- Email: seu-email@exemplo.com
+- GitHub: https://github.com/Victorvillela
+- LinkedIn: https://www.linkedin.com/in/jvictorvillela/
+- Email: victormolicovillela@hotmail.com
 
 ---
 
@@ -366,7 +366,7 @@ Se este projeto foi útil para você, considere dar uma ⭐️!
 
 ## 📞 Contato
 
-Tem dúvidas ou sugestões? Abra uma [issue](https://github.com/seu-usuario/bitcoin-price-monitor-n8n/issues) ou entre em contato!
+Tem dúvidas ou sugestões?
 
 ---
 
