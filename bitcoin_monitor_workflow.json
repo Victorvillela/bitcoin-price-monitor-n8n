@@ -1,0 +1,180 @@
+{
+  "name": "Bitcoin Price Monitor - 3 Year Low Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart",
+        "authentication": "none",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "vs_currency",
+              "value": "usd"
+            },
+            {
+              "name": "days",
+              "value": "1095"
+            },
+            {
+              "name": "interval",
+              "value": "daily"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-request-historical",
+      "name": "Get 3 Year Bitcoin History",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrair dados históricos de preço\nconst prices = $input.item.json.prices;\n\n// Calcular o preço mínimo dos últimos 3 anos\nconst minPrice = Math.min(...prices.map(p => p[1]));\n\n// Calcular preço médio\nconst avgPrice = prices.reduce((sum, p) => sum + p[1], 0) / prices.length;\n\n// Preço atual (último da lista)\nconst currentPrice = prices[prices.length - 1][1];\n\n// Calcular margem de proximidade (10% acima do mínimo)\nconst threshold = minPrice * 1.10;\n\n// Verificar se está próximo do mínimo\nconst isNearMin = currentPrice <= threshold;\n\n// Calcular % de distância do mínimo\nconst percentAboveMin = ((currentPrice - minPrice) / minPrice * 100).toFixed(2);\n\nreturn {\n  json: {\n    currentPrice: currentPrice.toFixed(2),\n    minPrice3Years: minPrice.toFixed(2),\n    avgPrice3Years: avgPrice.toFixed(2),\n    threshold: threshold.toFixed(2),\n    isNearMin: isNearMin,\n    percentAboveMin: percentAboveMin,\n    timestamp: new Date().toISOString(),\n    alertMessage: isNearMin ? \n      `🚨 ALERTA: Bitcoin está ${percentAboveMin}% acima do mínimo de 3 anos!` : \n      `✅ Bitcoin está ${percentAboveMin}% acima do mínimo de 3 anos.`\n  }\n};"
+      },
+      "id": "code-analysis",
+      "name": "Analyze Price Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isNearMin }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-near-minimum",
+      "name": "IF Near Minimum?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "seu-email@gmail.com",
+        "toEmail": "seu-email-destino@gmail.com",
+        "subject": "=🚨 Alerta: Bitcoin próximo do mínimo de 3 anos!",
+        "emailType": "html",
+        "message": "=<h2>🚨 Alerta de Preço do Bitcoin</h2>\n\n<p><strong>O Bitcoin está se aproximando do valor mínimo dos últimos 3 anos!</strong></p>\n\n<table style='border-collapse: collapse; width: 100%;'>\n  <tr style='background-color: #f2f2f2;'>\n    <td style='padding: 10px; border: 1px solid #ddd;'><strong>Preço Atual:</strong></td>\n    <td style='padding: 10px; border: 1px solid #ddd;'>$<strong>{{ $json.currentPrice }}</strong></td>\n  </tr>\n  <tr>\n    <td style='padding: 10px; border: 1px solid #ddd;'><strong>Mínimo (3 anos):</strong></td>\n    <td style='padding: 10px; border: 1px solid #ddd;'>${{ $json.minPrice3Years }}</td>\n  </tr>\n  <tr style='background-color: #f2f2f2;'>\n    <td style='padding: 10px; border: 1px solid #ddd;'><strong>Média (3 anos):</strong></td>\n    <td style='padding: 10px; border: 1px solid #ddd;'>${{ $json.avgPrice3Years }}</td>\n  </tr>\n  <tr>\n    <td style='padding: 10px; border: 1px solid #ddd;'><strong>% Acima do Mínimo:</strong></td>\n    <td style='padding: 10px; border: 1px solid #ddd;'><strong style='color: #d9534f;'>{{ $json.percentAboveMin }}%</strong></td>\n  </tr>\n</table>\n\n<p style='margin-top: 20px; padding: 15px; background-color: #fff3cd; border-left: 4px solid #ffc107;'>\n  <strong>⚠️ Ação Recomendada:</strong> Este pode ser um bom momento para considerar uma entrada ou acumulação.\n</p>\n\n<p style='color: #666; font-size: 12px;'>Data/Hora: {{ $json.timestamp }}</p>",
+        "options": {}
+      },
+      "id": "send-email",
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [1050, 200],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "Gmail SMTP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "none",
+        "url": "https://api.callmebot.com/whatsapp.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "phone",
+              "value": "+5511999999999"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.alertMessage }}%0A%0APreço Atual: ${{ $json.currentPrice }}%0AMínimo 3 anos: ${{ $json.minPrice3Years }}%0AMédia 3 anos: ${{ $json.avgPrice3Years }}%0A%0A{{ $json.timestamp }}"
+            },
+            {
+              "name": "apikey",
+              "value": "SEU_API_KEY_CALLMEBOT"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Send WhatsApp Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get 3 Year Bitcoin History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 3 Year Bitcoin History": {
+      "main": [
+        [
+          {
+            "node": "Analyze Price Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Price Data": {
+      "main": [
+        [
+          {
+            "node": "IF Near Minimum?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Near Minimum?": {
+      "main": [
+        [
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send WhatsApp Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
