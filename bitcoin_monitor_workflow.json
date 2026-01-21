@@ -1,24 +1,181 @@
 {
-  "name": "Bitcoin Price Monitor - 3 Year Low Alert",
+  "name": "Bitcoin Monitor - Alertas de Compra",
   "nodes": [
+    {
+      "parameters": {
+        "sendTo": "victormolicovillela@hotmail.com",
+        "subject": "={{ $json.emoji }} ALERTA BITCOIN - Queda de {{ $json.percentualQueda }}%",
+        "message": "🚨 Alerta: Bitcoin próximo do mínimo de 3 anos!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -16,
+        48
+      ],
+      "id": "8a57a1e0-d4b5-40c8-9ed3-9e6fe12769ee",
+      "name": "Send a message",
+      "webhookId": "eb4550b9-17fe-48bb-9804-2878a510738a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3B2WH7DJWBi9Jsnb",
+          "name": "Gmail account"
+        }
+      }
+    },
     {
       "parameters": {
         "rule": {
           "interval": [
             {
-              "field": "hours",
-              "hoursInterval": 6
+              "field": "minutes"
             }
           ]
         }
       },
-      "id": "e76844ba-e34e-4ca1-a61e-a4104248388b",
-      "name": "Schedule Trigger",
+      "id": "22f329e4-081f-4d96-9cb2-7a27953f81b2",
+      "name": "A cada 5 minutos",
       "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -912,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+        "options": {}
+      },
+      "id": "8a65bff0-2f2d-4b19-ba8a-79580da2a3b9",
+      "name": "Buscar Preço Bitcoin",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -688,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Preço base de referência (21/01/2026)\nconst precoBase = 89600;\n\n// Pega o preço atual do Bitcoin\nconst precoAtual = items[0].json.bitcoin.usd;\n\n// Calcula o percentual de queda\nconst percentualQueda = ((precoBase - precoAtual) / precoBase) * 100;\n\n// Formata os valores\nconst precoFormatado = precoAtual.toLocaleString('en-US', { style: 'currency', currency: 'USD' });\nconst quedaFormatada = percentualQueda.toFixed(2);\n\n// Determina qual alerta enviar (apenas -12% ou mais)\nlet deveAlertar = false;\nlet tipoAlerta = '';\nlet mensagemAlerta = '';\nlet alocacao = '';\nlet emoji = '';\n\nif (percentualQueda >= 12 && percentualQueda < 20) {\n  deveAlertar = true;\n  tipoAlerta = 'SEGUNDA OPORTUNIDADE';\n  emoji = '🟠';\n  alocacao = '40%';\n  mensagemAlerta = `\n${emoji} BITCOIN - ${tipoAlerta}\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 INFORMAÇÕES DO MERCADO:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💰 Preço atual: ${precoFormatado}\n📉 Queda detectada: ${quedaFormatada}%\n📍 Preço base: $89,600.00\n🎯 Faixa alvo: US$ 76.000 - 79.000 ✅\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💡 AÇÃO RECOMENDADA:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n→ Investir ${alocacao} do capital total\n→ Correção significativa detectada\n→ Excelente ponto de entrada\n→ Risco/retorno muito favorável\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📈 PRÓXIMOS PASSOS:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✓ Você receberá novo alerta se cair mais de 20%\n✓ Mantenha os outros 60% para oportunidades futuras\n✓ Esta é uma boa zona de acumulação\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️ LEMBRE-SE:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n• Invista apenas o que pode perder\n• Diversifique seus investimentos\n• Esta não é uma recomendação financeira\n• Faça sua própria análise antes de investir\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🤖 Alerta automático gerado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n  `;\n  \n} else if (percentualQueda >= 20) {\n  deveAlertar = true;\n  tipoAlerta = 'OPORTUNIDADE EXCEPCIONAL';\n  emoji = '🔴';\n  alocacao = '30%';\n  mensagemAlerta = `\n${emoji} BITCOIN - ${tipoAlerta}!\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📊 INFORMAÇÕES DO MERCADO:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💰 Preço atual: ${precoFormatado}\n📉 Queda detectada: ${quedaFormatada}% ⚠️\n📍 Preço base: $89,600.00\n🎯 Preço atingiu zona crítica!\n📌 Mínima de 2025: US$ 74,420\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💡 AÇÃO RECOMENDADA:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n→ Investir ${alocacao} restantes do capital\n→ Preço em zona histórica de suporte\n→ OPORTUNIDADE RARA de acumulação\n→ Último nível de entrada planejado!\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📈 ANÁLISE:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n✓ Correção de mais de 20% é historicamente\n  um excelente ponto de entrada\n✓ Poucos investidores têm a disciplina\n  de comprar nestes momentos\n✓ O medo do mercado pode ser sua oportunidade\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️ ATENÇÃO:\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n• Se cair ainda mais, considere DCA\n  (Dollar Cost Averaging)\n• Mantenha calma e siga seu plano\n• Volatilidade é normal no mercado cripto\n• Esta não é uma recomendação financeira\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🤖 Alerta automático gerado em: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}\n  `;\n}\n\n// Retorna os dados processados\nreturn [{\n  json: {\n    deveAlertar: deveAlertar,\n    precoAtual: precoAtual,\n    precoFormatado: precoFormatado,\n    percentualQueda: quedaFormatada,\n    tipoAlerta: tipoAlerta,\n    mensagemAlerta: mensagemAlerta,\n    alocacao: alocacao,\n    emoji: emoji,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "d5e53764-2399-40f3-b2f1-38d66d76ed6c",
+      "name": "Calcular Queda e Gerar Alerta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.deveAlertar }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "f575a13a-7b8f-4d5f-9283-350abda57a03",
+      "name": "Deve Enviar Alerta?",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 1,
       "position": [
-        -800,
-        112
+        -240,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "SEU_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Bitcoin Alertas Log"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data": "={{ $json.timestamp }}",
+            "Preço": "={{ $json.precoFormatado }}",
+            "Queda %": "={{ $json.percentualQueda }}",
+            "Tipo Alerta": "={{ $json.tipoAlerta }}",
+            "Alocação": "={{ $json.alocacao }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "80ba668d-ddbb-4a05-9ff0-27b34c6642f6",
+      "name": "Registrar em Planilha (Opcional)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8yF0ZoQViklWEjhX",
+          "name": "Google Sheets account"
+        }
+      },
+      "disabled": true,
+      "notes": "Desabilitado por padrão. Ative se quiser histórico em planilha."
+    },
+    {
+      "parameters": {},
+      "id": "15229796-3bc0-4de9-b2bd-212b73253283",
+      "name": "Sem Alerta Necessário",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.isNearMin }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "5dcc26f6-152a-4690-8195-0d0875981723",
+      "name": "IF Near Minimum?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrair dados históricos de preço\nconst prices = $input.item.json.prices;\n\n// Calcular o preço mínimo dos últimos 3 anos\nconst minPrice = Math.min(...prices.map(p => p[1]));\n\n// Calcular preço médio\nconst avgPrice = prices.reduce((sum, p) => sum + p[1], 0) / prices.length;\n\n// Preço atual (último da lista)\nconst currentPrice = prices[prices.length - 1][1];\n\n// Calcular margem de proximidade (5% acima do mínimo)\nconst threshold = minPrice * 1.08;\n\n// Verificar se está próximo do mínimo\nconst isNearMin = currentPrice <= threshold;\n\n// Calcular % de distância do mínimo\nconst percentAboveMin = ((currentPrice - minPrice) / minPrice * 100).toFixed(2);\n\nreturn {\n  json: {\n    currentPrice: currentPrice.toFixed(2),\n    minPrice3Years: minPrice.toFixed(2),\n    avgPrice3Years: avgPrice.toFixed(2),\n    threshold: threshold.toFixed(2),\n    isNearMin: isNearMin,\n    percentAboveMin: percentAboveMin,\n    timestamp: new Date().toISOString(),\n    alertMessage: isNearMin ? \n      `🚨 ALERTA: Bitcoin está apenas ${percentAboveMin}% acima do mínimo de 3 anos!` : \n      `✅ Bitcoin está ${percentAboveMin}% acima do mínimo de 3 anos.`\n  }\n};"
+      },
+      "id": "23789041-1756-4b35-a093-48922ca90490",
+      "name": "Analyze Price Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        0
       ]
     },
     {
@@ -48,103 +205,21 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        -608,
-        112
+        -688,
+        0
       ]
-    },
-    {
-      "parameters": {
-        "jsCode": "// Extrair dados históricos de preço\nconst prices = $input.item.json.prices;\n\n// Calcular o preço mínimo dos últimos 3 anos\nconst minPrice = Math.min(...prices.map(p => p[1]));\n\n// Calcular preço médio\nconst avgPrice = prices.reduce((sum, p) => sum + p[1], 0) / prices.length;\n\n// Preço atual (último da lista)\nconst currentPrice = prices[prices.length - 1][1];\n\n// Calcular margem de proximidade (10% acima do mínimo)\nconst threshold = minPrice * 1.17;\n\n// Verificar se está próximo do mínimo\nconst isNearMin = currentPrice <= threshold;\n\n// Calcular % de distância do mínimo\nconst percentAboveMin = ((currentPrice - minPrice) / minPrice * 100).toFixed(2);\n\nreturn {\n  json: {\n    currentPrice: currentPrice.toFixed(2),\n    minPrice3Years: minPrice.toFixed(2),\n    avgPrice3Years: avgPrice.toFixed(2),\n    threshold: threshold.toFixed(2),\n    isNearMin: isNearMin,\n    percentAboveMin: percentAboveMin,\n    timestamp: new Date().toISOString(),\n    alertMessage: isNearMin ? \n      `🚨 ALERTA: Bitcoin está ${percentAboveMin}% acima do mínimo de 3 anos!` : \n      `✅ Bitcoin está ${percentAboveMin}% acima do mínimo de 3 anos.`\n  }\n};"
-      },
-      "id": "23789041-1756-4b35-a093-48922ca90490",
-      "name": "Analyze Price Data",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -400,
-        112
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "boolean": [
-            {
-              "value1": "={{ $json.isNearMin }}",
-              "value2": true
-            }
-          ]
-        }
-      },
-      "id": "5dcc26f6-152a-4690-8195-0d0875981723",
-      "name": "IF Near Minimum?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
-      "position": [
-        -208,
-        112
-      ]
-    },
-    {
-      "parameters": {
-        "url": "https://api.callmebot.com/whatsapp.php",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            {
-              "name": "phone",
-              "value": "+5511948445809"
-            },
-            {
-              "name": "text",
-              "value": "={{ $json.alertMessage }}%0A%0APreço Atual: ${{ $json.currentPrice }}%0AMínimo 3 anos: ${{ $json.minPrice3Years }}%0AMédia 3 anos: ${{ $json.avgPrice3Years }}%0A%0A{{ $json.timestamp }}"
-            },
-            {
-              "name": "apikey",
-              "value": "SEU_API_KEY_CALLMEBOT"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "934a58d0-1a4d-4009-a04f-dbe3255e9cdf",
-      "name": "Send WhatsApp Alert",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4,
-      "position": [
-        288,
-        224
-      ]
-    },
-    {
-      "parameters": {
-        "sendTo": "victormolicovillela@hotmail.com",
-        "subject": "🚨 Alerta: Bitcoin próximo do mínimo de 3 anos!",
-        "message": "🚨 Alerta: Bitcoin próximo do mínimo de 3 anos!",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.2,
-      "position": [
-        256,
-        -48
-      ],
-      "id": "8a57a1e0-d4b5-40c8-9ed3-9e6fe12769ee",
-      "name": "Send a message",
-      "webhookId": "eb4550b9-17fe-48bb-9804-2878a510738a",
-      "credentials": {
-        "gmailOAuth2": {
-          "id": "3B2WH7DJWBi9Jsnb",
-          "name": "Gmail account"
-        }
-      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Schedule Trigger": {
+    "A cada 5 minutos": {
       "main": [
         [
+          {
+            "node": "Buscar Preço Bitcoin",
+            "type": "main",
+            "index": 0
+          },
           {
             "node": "Get 3 Year Bitcoin History",
             "type": "main",
@@ -153,11 +228,45 @@
         ]
       ]
     },
-    "Get 3 Year Bitcoin History": {
+    "Buscar Preço Bitcoin": {
       "main": [
         [
           {
-            "node": "Analyze Price Data",
+            "node": "Calcular Queda e Gerar Alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular Queda e Gerar Alerta": {
+      "main": [
+        [
+          {
+            "node": "Deve Enviar Alerta?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deve Enviar Alerta?": {
+      "main": [
+        [
+          {
+            "node": "Registrar em Planilha (Opcional)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sem Alerta Necessário",
             "type": "main",
             "index": 0
           }
@@ -175,29 +284,41 @@
         ]
       ]
     },
-    "IF Near Minimum?": {
+    "Get 3 Year Bitcoin History": {
       "main": [
         [
           {
-            "node": "Send WhatsApp Alert",
+            "node": "Analyze Price Data",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "IF Near Minimum?": {
+      "main": [
+        [
           {
             "node": "Send a message",
             "type": "main",
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Sem Alerta Necessário",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3c4af0d6-6f7e-4695-b169-f5e5c44dc208",
+  "versionId": "69c7ad83-7947-4f46-8719-c772832b2475",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6c7f1f4a4b3b1c595b7a644ce8a35ad15990887258d59310676a4a2e608a34f3"
